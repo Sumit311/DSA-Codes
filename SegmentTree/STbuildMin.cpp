@@ -25,6 +25,7 @@ public:
         seg[ind] = min(seg[2 * ind + 1], seg[2 * ind + 2]);
     }
 
+    // query function
     int query(int ind, int low, int high, int l, int r)
     {
         // no overlap
@@ -42,6 +43,8 @@ public:
         int right = query(2 * ind + 2, mid + 1, high, l, r);
         return min(left, right);
     }
+
+    // update function
     void update(int ind, int low, int high, int i, int val)
     {
         if (low == high)
