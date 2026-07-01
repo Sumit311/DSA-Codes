@@ -3,6 +3,7 @@ using namespace std;
 
 class SGTree
 {
+public:
     vector<int> seg;
 
 public:
