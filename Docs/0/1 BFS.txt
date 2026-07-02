@@ -1,0 +1,339 @@
+# Graph & Grid Problem Recognition Cheat Sheet
+
+## Step 1: Identify the State
+
+The first question to ask is:
+
+> **What uniquely defines a state?**
+
+### Case 1: Position Only
+
+If reaching a cell is all that matters:
+
+```
+State = (row, col)
+```
+
+Examples:
+
+* Maze
+* Number of Islands
+* Flood Fill
+* Simple path existence
+
+A simple `visited[][]` is sufficient.
+
+---
+
+### Case 2: Position + Resource
+
+If reaching the same cell with different values changes future possibilities, then the state is **not just the position**.
+
+Examples of resources:
+
+* Health
+* Fuel
+* Energy
+* Money
+* Remaining moves
+* Keys collected
+* Obstacles removed
+
+Examples:
+
+```
+State = (row, col, health)
+State = (row, col, fuel)
+State = (row, col, keys)
+```
+
+A plain `visited[][]` is **incorrect**.
+
+---
+
+# Step 2: Can the Same Cell Be Reached in Different Ways?
+
+Ask yourself:
+
+> "If I reach the same cell twice, can one visit be better than the other?"
+
+Example:
+
+```
+Cell (3,4)
+
+Path A:
+Remaining Health = 10
+
+Path B:
+Remaining Health = 3
+```
+
+These are different states.
+
+If the answer is **Yes**, then don't use only `visited[][]`.
+
+Instead store something like:
+
+```
+best[row][col]
+```
+
+where `best` represents:
+
+* Maximum remaining health
+* Minimum cost
+* Maximum coins
+* Minimum distance
+
+---
+
+# Step 3: Am I Optimizing Something?
+
+Ask:
+
+> "Am I trying to minimize or maximize something?"
+
+Examples:
+
+* Minimum cost
+* Minimum health lost
+* Maximum remaining health
+* Minimum time
+* Minimum obstacles
+* Minimum unsafe cells
+
+If the answer is **Yes**, think:
+
+* BFS
+* 0-1 BFS
+* Dijkstra
+* Dynamic Programming
+
+instead of plain DFS.
+
+---
+
+# Step 4: Identify Edge Weights
+
+This is one of the fastest ways to identify the correct algorithm.
+
+### Every move has equal cost
+
+```
+1
+```
+
+Use:
+
+**BFS**
+
+Examples:
+
+* Shortest path in an unweighted graph
+* Minimum moves in a maze
+
+---
+
+### Edge weights are only
+
+```
+0 or 1
+```
+
+Use:
+
+**0-1 BFS**
+
+Examples:
+
+* Safe cell = cost 0
+* Unsafe cell = cost 1
+* Remove obstacle = cost 1
+
+---
+
+### Positive edge weights
+
+Use:
+
+**Dijkstra**
+
+Examples:
+
+* Road lengths
+* Travel costs
+* Time
+
+---
+
+### Negative edge weights
+
+Use:
+
+**Bellman-Ford**
+
+---
+
+# Step 5: When is DFS Correct?
+
+DFS is a good choice when:
+
+* Only existence of a path matters.
+* State is just the position.
+* No optimization is required.
+* Reaching a node again provides no benefit.
+
+Typical examples:
+
+* Number of Islands
+* Flood Fill
+* Detect Cycle
+* Connected Components
+* Simple Path Existence
+
+---
+
+# Step 6: When is DFS Usually Wrong?
+
+Be cautious if the problem involves:
+
+* Health
+* Fuel
+* Coins
+* Energy
+* Time
+* Cost
+* Remaining moves
+
+or if different ways of reaching the same node have different future potential.
+
+In these cases, plain DFS with `visited[][]` usually loses important information.
+
+---
+
+# Step 7: Recognition Checklist
+
+Whenever you see a graph/grid problem, ask:
+
+### 1. What is the state?
+
+```
+(row, col)
+```
+
+or
+
+```
+(row, col, health)
+```
+
+---
+
+### 2. Can I revisit a node with a better value?
+
+If **Yes**, don't use only `visited[][]`.
+
+---
+
+### 3. Am I minimizing or maximizing something?
+
+If **Yes**, think shortest path or DP.
+
+---
+
+### 4. What are the edge weights?
+
+```
+All equal
+    ↓
+BFS
+
+0 / 1
+    ↓
+0-1 BFS
+
+Positive
+    ↓
+Dijkstra
+
+Negative
+    ↓
+Bellman-Ford
+```
+
+---
+
+# Mental Model
+
+Convert every grid into a graph.
+
+Instead of thinking:
+
+```
+Grid
+```
+
+think:
+
+```
+Node ----cost----> Node
+```
+
+Once you think in terms of nodes and edge costs, the correct algorithm becomes much easier to identify.
+
+---
+
+# Decision Table
+
+| Problem Type                          | Recommended Algorithm               |
+| ------------------------------------- | ----------------------------------- |
+| Connectivity                          | DFS / BFS                           |
+| Path Exists                           | DFS / BFS                           |
+| Shortest Path (Unweighted)            | BFS                                 |
+| Shortest Path (0/1 Weights)           | 0-1 BFS                             |
+| Shortest Path (Positive Weights)      | Dijkstra                            |
+| Shortest Path (Negative Weights)      | Bellman-Ford                        |
+| State includes Health/Fuel/Energy     | BFS/Dijkstra/DP with extended state |
+| Tree where parent depends on children | Tree DP + DFS                       |
+| Grid with optimization objective      | Usually BFS/Dijkstra, not plain DFS |
+
+---
+
+# Common Interview Red Flags
+
+If you see words like:
+
+* Minimum
+* Maximum
+* Health
+* Fuel
+* Cost
+* Remaining
+* Time
+* Distance
+* Energy
+
+pause before writing DFS.
+
+Ask:
+
+1. What is the state?
+2. Am I optimizing something?
+3. Are there edge weights?
+4. Can reaching the same node with a different value change the answer?
+
+If the answer to any of these is **Yes**, investigate BFS, 0-1 BFS, Dijkstra, or DP before choosing DFS.
+
+---
+
+# One-Minute Revision
+
+* **State = Position only** → DFS/BFS.
+* **State = Position + Resource** → Extend the state (`best` or `(position, resource)`).
+* **Equal edge weights** → BFS.
+* **0/1 edge weights** → 0-1 BFS.
+* **Positive edge weights** → Dijkstra.
+* **Negative edge weights** → Bellman-Ford.
+* **Optimization (min/max)** → Think shortest path or DP, not plain DFS.
+* **If reaching the same node with different values matters, `visited[][]` alone is almost always wrong.**
