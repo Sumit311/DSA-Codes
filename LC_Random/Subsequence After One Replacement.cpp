@@ -102,3 +102,51 @@ public:
         return false;
     }
 };
+
+/******************** BEST SOLUTION ***********************/
+class Solution
+{
+public:
+    bool canMakeSubsequence(string s, string t)
+    {
+
+        int n = s.size();
+
+        // Longest prefix matched without replacement.
+        int normalMatch = 0;
+
+        // Longest prefix matched using at most one replacement.
+        int oneReplacementMatch = 0;
+
+        for (char currentChar : t)
+        {
+
+            // Option 1:
+            // Continue a path where replacement
+            // was already used.
+            if (oneReplacementMatch < n &&
+                currentChar == s[oneReplacementMatch])
+            {
+
+                oneReplacementMatch++;
+            }
+
+            // Option 2:
+            // Start using the replacement
+            // at the current position.
+            oneReplacementMatch =
+                max(oneReplacementMatch,
+                    min(normalMatch + 1, n));
+
+            // Normal subsequence matching.
+            if (normalMatch < n &&
+                currentChar == s[normalMatch])
+            {
+
+                normalMatch++;
+            }
+        }
+
+        return oneReplacementMatch == n;
+    }
+};
