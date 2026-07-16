@@ -1,0 +1,204 @@
+/*
+===============================================================================
+                        3989. Maximum Consistent Columns in a Grid
+
+Approach: Dynamic Programming (Longest Path in a DAG / LIS on Columns)
+
+-------------------------------------------------------------------------------
+Intuition
+-------------------------------------------------------------------------------
+
+We need to choose one common subsequence of columns that works for EVERY row.
+
+Suppose we keep columns:
+
+    c1 < c2 < c3 < ...
+
+The problem only requires that every pair of ADJACENT remaining columns satisfies
+
+    |grid[row][next] - grid[row][prev]| <= limit
+
+for every row.
+
+Notice that the condition only depends on two adjacent chosen columns.
+
+Therefore, think of every column as a node.
+
+Draw an edge:
+
+    i ----> j   (i < j)
+
+if columns i and j can be adjacent in the final answer, i.e.
+
+    for every row:
+        abs(grid[row][j] - grid[row][i]) <= limit
+
+Now the problem becomes:
+
+    Find the longest path in this DAG.
+
+Since edges only go from smaller index to larger index,
+the graph is already topologically sorted.
+
+This becomes the classic LIS DP.
+
+-------------------------------------------------------------------------------
+DP State
+-------------------------------------------------------------------------------
+
+dp[j] = Maximum number of columns that can remain
+        if column j is the LAST chosen column.
+
+Initially,
+
+    dp[j] = 1
+
+because every column alone forms a valid grid.
+
+Transition:
+
+For every previous column i < j,
+
+if columns i and j are compatible for ALL rows,
+
+    dp[j] = max(dp[j], dp[i] + 1)
+
+Answer:
+
+    max(dp)
+
+-------------------------------------------------------------------------------
+Example
+-------------------------------------------------------------------------------
+
+Columns:
+
+    0   1   2   3
+
+Initially
+
+    dp = [1,1,1,1]
+
+Suppose valid edges are
+
+    0 -> 2
+    1 -> 2
+    1 -> 3
+
+Processing:
+
+Column 0:
+    dp = [1,1,1,1]
+
+Column 1:
+    no transition
+    dp = [1,1,1,1]
+
+Column 2:
+    from 0 => 2
+    from 1 => 2
+
+    dp = [1,1,2,1]
+
+Column 3:
+    from 1 => 2
+
+    dp = [1,1,2,2]
+
+Answer = 2
+
+-------------------------------------------------------------------------------
+Time Complexity
+-------------------------------------------------------------------------------
+
+Let
+
+m = number of rows
+n = number of columns
+
+There are O(n²) pairs of columns.
+
+For every pair, we check all rows.
+
+Time:
+
+    O(m × n²)
+
+-------------------------------------------------------------------------------
+Space Complexity
+-------------------------------------------------------------------------------
+
+DP array:
+
+    O(n)
+
+-------------------------------------------------------------------------------
+Key Observation
+-------------------------------------------------------------------------------
+
+This is NOT solving each row independently.
+
+The chosen columns must be identical for every row.
+
+Hence every transition (i -> j) must satisfy the condition for ALL rows.
+
+This is essentially:
+
+    Longest Path in a DAG
+
+or equivalently,
+
+    Longest Increasing Subsequence DP
+    with a custom transition condition.
+
+===============================================================================
+*/
+
+class Solution
+{
+public:
+    int maxConsistentColumns(vector<vector<int>> &grid, int limit)
+    {
+
+        int rows = grid.size();
+        int cols = grid[0].size();
+
+        // dp[j] = longest valid sequence ending at column j
+        vector<int> dp(cols, 1);
+
+        int answer = 1;
+
+        // Process columns from left to right
+        for (int j = 0; j < cols; j++)
+        {
+
+            // Try every previous column
+            for (int i = 0; i < j; i++)
+            {
+
+                bool valid = true;
+
+                // Check whether columns i and j
+                // can be adjacent for every row.
+                for (int r = 0; r < rows; r++)
+                {
+
+                    if (abs(grid[r][j] - grid[r][i]) > limit)
+                    {
+                        valid = false;
+                        break;
+                    }
+                }
+
+                if (valid)
+                {
+                    dp[j] = max(dp[j], dp[i] + 1);
+                }
+            }
+
+            answer = max(answer, dp[j]);
+        }
+
+        return answer;
+    }
+};
