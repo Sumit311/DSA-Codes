@@ -12,244 +12,309 @@ Example:
     Input : "babad"
     Output: "bab" or "aba"
 
-Naive Solution:
-    Expand around every center.
-    Time Complexity = O(n^2)
+Brute Force:
+    Check every substring and verify whether it is a palindrome.
+
+    Time Complexity : O(n^3)
+
+Expand Around Center:
+    Expand around every possible center.
+
+    Time Complexity : O(n^2)
 
 Manacher's Algorithm:
-    Reuses information from previously found palindromes.
-    Time Complexity = O(n)
+    Reuses information from previously computed palindromes to avoid
+    unnecessary comparisons.
+
+    Time Complexity : O(n)
 
 ===============================================================================
 INTUITION
 -------------------------------------------------------------------------------
-This algorithm is very similar to the Z Algorithm.
 
-Z Algorithm:
-    Keep a window [l, r] that matches the prefix.
+The biggest observation is that palindromes are symmetric.
 
-Manacher:
-    Keep the RIGHTMOST palindrome discovered so far.
+Suppose we already know this palindrome:
 
-Instead of storing:
-    [l, r]
+                center
+                  |
+        # a # b # c # b # a #
+                  <---------->
+                      right
 
-We store:
-    center = center of palindrome
-    right  = right boundary of palindrome
+Everything inside this palindrome has already been verified.
 
-Example:
+Now imagine we are processing another index that lies inside this palindrome.
 
-            center
-               |
-#a#b#b#a#
-    <-------> right
+Because of symmetry, much of its palindrome is already known.
+Instead of expanding from scratch, we reuse previously computed information.
 
-Everything inside this palindrome is already verified.
-We try to reuse this information instead of recomputing it.
+This is exactly what makes Manacher's Algorithm linear.
+
+Instead of repeatedly checking the same characters, we remember the
+rightmost palindrome discovered so far and reuse it.
 
 ===============================================================================
-STEP 1 : Transform the String
+WHY DO WE TRANSFORM THE STRING?
 -------------------------------------------------------------------------------
 
-Convert
+Original string
 
-    "abba"
-
-into
-
-    "#a#b#b#a#"
-
-Why?
-
-Normally there are two types of palindromes:
-
-Odd:
-    racecar
-
-Even:
     abba
 
-After transformation, EVERY palindrome becomes odd length.
-Now every palindrome has exactly one center.
+contains
+
+Odd palindrome
+
+    racecar
+
+and
+
+Even palindrome
+
+    abba
+
+Handling these separately complicates the algorithm.
+
+Instead we transform the string.
+
+Original
+
+    abba
+
+Transformed
+
+    #a#b#b#a#
+
+Now every palindrome has odd length.
+
+Every palindrome has exactly ONE center.
+
+So we only need one algorithm.
 
 ===============================================================================
-STEP 2 : Radius Array
+RADIUS ARRAY
 -------------------------------------------------------------------------------
 
-p[i] = radius of palindrome centered at index i.
+We maintain an array
+
+    p[i]
+
+where
+
+    p[i] = radius of the palindrome centered at index i
+           in the transformed string.
 
 Example
 
-#a#b#b#a#
-     ^
+        # a # b # b # a #
+              ^
+              i
 
-If
+Suppose
 
     p[i] = 4
 
-it means we can move
-    4 positions left
-and 4 positions right
-while characters keep matching.
+Then the palindrome spans
+
+    [i-4 , i+4]
+
+Notice:
+
+p[i] is NOT the palindrome length.
+
+In the transformed string
+
+    palindrome length = 2*p[i] + 1
 
 ===============================================================================
-STEP 3 : Maintain Current Largest Palindrome
+MAIN IDEA
 -------------------------------------------------------------------------------
 
-center = center of current rightmost palindrome
-right  = right boundary of that palindrome
+Maintain two variables:
+
+    center
+        Center of the current rightmost palindrome.
+
+    right
+        Right boundary of that palindrome.
 
 Initially
 
     center = 0
     right  = 0
 
-===============================================================================
-STEP 4 : Process Every Index
--------------------------------------------------------------------------------
-
-For every index i:
-
-CASE 1 : i >= right
--------------------
-
-Current index is OUTSIDE the known palindrome.
-
-We know nothing.
-
-Expand manually around i.
+These two variables allow us to reuse previously computed answers.
 
 ===============================================================================
-CASE 2 : i < right
+ALGORITHM
 -------------------------------------------------------------------------------
 
-Current index is INSIDE the known palindrome.
+For every index i in the transformed string:
 
-Example
+1. Check whether i lies inside the current palindrome.
 
-mirror ----- center ----- i
+    If
 
-Because palindrome is symmetric,
+        i < right
 
-whatever happens at mirror
-also happens at i.
+    then we already know part of the answer.
 
-Mirror index is
+2. Find the mirror position.
 
-    mirror = 2 * center - i
+        mirror = 2 * center - i
 
-We copy the already known radius
+3. Copy the already known radius.
 
-    p[i] = min(right - i, p[mirror])
+        p[i] = min(right - i, p[mirror])
 
-Why min() ?
+4. Expand further while characters match.
 
-Because the mirror palindrome may extend outside the current
-known palindrome.
+5. If the palindrome extends farther than the current right boundary,
 
-We only trust information up to "right".
+        update center
+        update right
+
+6. Track the maximum radius while processing.
+
+7. Convert the answer back to the original string.
 
 ===============================================================================
-STEP 5 : Expand
+EXAMPLE
 -------------------------------------------------------------------------------
 
-After copying,
-try expanding further.
+Input
 
-while(left and right characters match)
-{
-    p[i]++;
-}
+    "abba"
 
-If expansion succeeds,
-we discovered a larger palindrome.
+Transformed
 
-===============================================================================
-STEP 6 : Update
--------------------------------------------------------------------------------
+    # a # b # b # a #
 
-If
+Index
 
-    i + p[i] > right
+    0 1 2 3 4 5 6 7 8
 
-then we found a palindrome extending farther.
+Suppose after running the algorithm
 
-Update
+    p =
 
-    center = i
-    right = i + p[i]
+    0 1 0 1 4 1 0 1 0
 
-This becomes the new palindrome we will reuse.
+Maximum radius
 
-===============================================================================
-STEP 7 : Find the Answer
--------------------------------------------------------------------------------
+    center = 4
+    radius = 4
 
-Find maximum value in p[].
+Convert back
 
-Suppose
+    start = (4 - 4) / 2
+          = 0
 
-    centerIndex = index having maximum radius
-    maxRadius   = p[centerIndex]
+Longest palindrome length
 
-Convert transformed index back:
-
-    start = (centerIndex - maxRadius) / 2
+    radius = 4
 
 Answer
 
-    s.substr(start, maxRadius)
+    "abba"
 
 ===============================================================================
-MEMORY TRICK
+COMMON MISTAKES
 -------------------------------------------------------------------------------
 
-Transform
-    ↓
-For every center
-    ↓
-If inside palindrome → Copy mirror
-    ↓
-Expand
-    ↓
-Update center & right
-    ↓
-Return longest palindrome
+1. Forgetting to transform the string.
+
+2. Forgetting that p[i] stores radius, NOT length.
+
+3. Forgetting the mirror optimization.
+
+4. Copying
+
+       p[mirror]
+
+   directly.
+
+   Correct
+
+       p[i] = min(right - i, p[mirror])
+
+5. Forgetting to update
+
+       center
+       right
+
+6. Converting indices incorrectly.
 
 ===============================================================================
-Connection with Z Algorithm
+TIME COMPLEXITY
 -------------------------------------------------------------------------------
 
-Z Algorithm                    Manacher
----------------------------------------------------------
-Window [l,r]              ->   Palindrome (center,right)
+Transformation
 
-idx = i-l                 ->   mirror = 2*center-i
+    O(n)
 
-Copy z[idx]               ->   Copy p[mirror]
+Manacher
 
-Expand beyond r           ->   Expand beyond right
+    O(n)
 
-Update [l,r]              ->   Update (center,right)
+Overall
 
-Prefix Matching           ->   Palindrome Matching
+    O(n)
 
-If you understand Z Algorithm,
-Manacher is simply the same optimization using palindrome symmetry.
+Space Complexity
+
+    O(n)
+
+===============================================================================
+INTERVIEW TIPS
+-------------------------------------------------------------------------------
+
+When should you use Manacher?
+
+✓ Longest Palindromic Substring
+✓ Longest Palindromic Subarray
+✓ Problems requiring palindrome preprocessing
+
+Advantages
+
+✓ Linear time
+✓ Elegant use of symmetry
+✓ Much faster than Expand Around Center for large inputs
+
+Remember the flow:
+
+    Transform
+        ↓
+    For every center
+        ↓
+    Copy mirror radius if possible
+        ↓
+    Expand
+        ↓
+    Update center & right
+        ↓
+    Track maximum radius
+        ↓
+    Convert answer
+
 ===============================================================================
 */
 
 #include <bits/stdc++.h>
 using namespace std;
 
-string longestPalindrome(string s)
+string longestPalindrome(const string &s)
 {
-    string t = "#";
+    // Transform: "abba" -> "#a#b#b#a#"
+    string t;
+    t.reserve(2 * s.size() + 1);
+
+    t.push_back('#');
     for (char c : s)
     {
-        t += c;
-        t += '#';
+        t.push_back(c);
+        t.push_back('#');
     }
 
     int n = t.size();
@@ -258,12 +323,16 @@ string longestPalindrome(string s)
     int center = 0;
     int right = 0;
 
+    int bestCenter = 0;
+    int bestRadius = 0;
+
     for (int i = 0; i < n; i++)
     {
-        int mirror = 2 * center - i;
-
         if (i < right)
+        {
+            int mirror = 2 * center - i;
             p[i] = min(right - i, p[mirror]);
+        }
 
         while (i - p[i] - 1 >= 0 &&
                i + p[i] + 1 < n &&
@@ -277,27 +346,23 @@ string longestPalindrome(string s)
             center = i;
             right = i + p[i];
         }
-    }
 
-    int maxRadius = 0;
-    int centerIndex = 0;
-
-    for (int i = 0; i < n; i++)
-    {
-        if (p[i] > maxRadius)
+        if (p[i] > bestRadius)
         {
-            maxRadius = p[i];
-            centerIndex = i;
+            bestRadius = p[i];
+            bestCenter = i;
         }
     }
 
-    int start = (centerIndex - maxRadius) / 2;
-    return s.substr(start, maxRadius);
+    int start = (bestCenter - bestRadius) / 2;
+    return s.substr(start, bestRadius);
 }
 
 int main()
 {
     string s = "babad";
+
     cout << longestPalindrome(s);
+
     return 0;
 }
